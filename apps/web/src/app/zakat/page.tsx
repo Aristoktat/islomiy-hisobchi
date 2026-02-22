@@ -57,6 +57,22 @@ export default function ZakatPage() {
         };
         const res = engine.calculate(input);
         setResult(res);
+
+        if (window.Telegram?.WebApp?.MainButton) {
+            const mainBtn = window.Telegram.WebApp.MainButton;
+            mainBtn.text = "NATIJANI BOTGA YUBORISH";
+            mainBtn.show();
+            mainBtn.onClick(() => {
+                const serializableResult = {
+                    ...res,
+                    type: 'zakat',
+                    nisabValue: res.nisabValue.toString(),
+                    zakatableAmount: res.zakatableAmount.toString(),
+                    zakatDue: res.zakatDue.toString()
+                };
+                window.Telegram.WebApp.sendData(JSON.stringify(serializableResult));
+            });
+        }
     };
 
     return (

@@ -78,6 +78,29 @@ bot.on("message:web_app_data", async (ctx) => {
             }
 
             await ctx.reply(text, { parse_mode: "Markdown" });
+        } else if (data.type === 'zakat') {
+            let text = `💰 *Zakot Hisobi Natijasi*\n\n`;
+            text += `${data.nisabMet ? '✅ *Zakot farz*' : '❌ *Nisob yetmadi*'}\n`;
+            text += `📏 Nisob miqdori: \`${formatMoney(BigInt(data.nisabValue))}\`\n`;
+            text += `💵 Jami boylik: \`${formatMoney(BigInt(data.zakatableAmount))}\`\n\n`;
+
+            if (data.nisabMet) {
+                text += `✨ *To'lanadigan zakot:* \`${formatMoney(BigInt(data.zakatDue))}\``;
+            }
+
+            await ctx.reply(text, { parse_mode: "Markdown" });
+        } else if (data.type === 'will') {
+            let text = `✍️ *Vasiyat Hisobi Natijasi*\n\n`;
+            text += `💰 Tarika (sof meros): \`${formatMoney(BigInt(data.tarika))}\n`;
+            text += `⚖️ Maksimal vasiyat (1/3): \`${formatMoney(BigInt(data.maxWill))}\`\n`;
+            text += `📜 Qo'llanilgan vasiyat: \`${formatMoney(BigInt(data.appliedWill))}\`\n`;
+            text += `✨ *Merosxo'rlar uchun qolgan:* \`${formatMoney(BigInt(data.netEstate))}\`\n`;
+
+            if (data.isCapped) {
+                text += `\n⚠️ *Eslatma:* So'ralgan vasiyat 1/3 dan oshgani uchun islom qoidasiga ko'ra cheklandi.`;
+            }
+
+            await ctx.reply(text, { parse_mode: "Markdown" });
         }
     } catch (e) {
         await ctx.reply("Ma'lumotlarni qayta ishlashda xato yuz berdi.");

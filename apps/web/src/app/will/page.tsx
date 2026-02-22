@@ -20,6 +20,23 @@ export default function WillPage() {
             BigInt(form.requestedWill || '0')
         );
         setResult(res);
+
+        if (window.Telegram?.WebApp?.MainButton) {
+            const mainBtn = window.Telegram.WebApp.MainButton;
+            mainBtn.text = "NATIJANI BOTGA YUBORISH";
+            mainBtn.show();
+            mainBtn.onClick(() => {
+                const serializableResult = {
+                    ...res,
+                    type: 'will',
+                    tarika: res.tarika.toString(),
+                    maxWill: res.maxWill.toString(),
+                    appliedWill: res.appliedWill.toString(),
+                    netEstate: res.netEstate.toString()
+                };
+                window.Telegram.WebApp.sendData(JSON.stringify(serializableResult));
+            });
+        }
     };
 
     const formatMoney = (amount: bigint) => {
