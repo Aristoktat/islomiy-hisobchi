@@ -1,25 +1,19 @@
 import { Bot, InlineKeyboard } from "grammy";
 import * as dotenv from "dotenv";
 import http from "http";
-import Database from "better-sqlite3";
+import fs from "fs";
 import path from "path";
 
 dotenv.config();
 
-// Database sozlamalari
-const dbPath = path.join(process.cwd(), "users.db");
-const db = new Database(dbPath);
+// JSON Database sozlamalari
+const dbPath = path.join(process.cwd(), "users.json");
+if (!fs.existsSync(dbPath)) {
+    fs.writeFileSync(dbPath, JSON.stringify([]));
+}
 
-// Jadval yaratish
-db.prepare(`
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY,
-        chat_id INTEGER UNIQUE,
-        username TEXT,
-        first_name TEXT,
-        last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-`).run();
+const getUsers = () => JSON.parse(fs.readFileSync(dbPath, "utf-8"));
+const saveUsers = (users: any[]) => fs.writeFileSync(dbPath, JSON.stringify(users, null, 2));
 
 // Admin ID (Sizning chat_id ingiz)
 const ADMIN_ID = process.env.ADMIN_ID ? parseInt(process.env.ADMIN_ID) : 689757167;
@@ -40,10 +34,22 @@ const bot = new Bot(token);
 bot.use(async (ctx, next) => {
     if (ctx.from) {
         const { id, username, first_name } = ctx.from;
-        db.prepare(`
-            INSERT OR REPLACE INTO users (chat_id, username, first_name, last_seen)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        `).run(id, username || null, first_name);
+        const users = getUsers();
+        const index = users.findIndex((u: any) => u.chat_id === id);
+
+        const userData = {
+            chat_id: id,
+            username: username || null,
+            first_name: first_name,
+            last_seen: new Date().toISOString()
+        };
+
+        if (index > -1) {
+            users[index] = userData;
+        } else {
+            users.push(userData);
+        }
+        saveUsers(users);
     }
     await next();
 });
@@ -96,8 +102,9 @@ bot.command("start", async (ctx) => {
 bot.command("admin", async (ctx) => {
     if (ctx.from?.id !== ADMIN_ID) return;
 
-    const stats = db.prepare("SELECT COUNT(*) as total FROM users").get() as { total: number };
-    const recent = db.prepare("SELECT username, first_name FROM users ORDER BY last_seen DESC LIMIT 5").all() as any[];
+    const users = getUsers();
+    const stats = { total: users.length };
+    const recent = users.sort((a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime()).slice(0, 5);
 
     let text = `📊 *Bot Statistikasi*\n\n`;
     text += `👥 Jami foydalanuvchilar: \`${stats.total}\`\n\n`;
@@ -119,7 +126,7 @@ bot.command("broadcast", async (ctx) => {
         return await ctx.reply("Foydalanish: `/broadcast Xabar matni`", { parse_mode: "Markdown" });
     }
 
-    const users = db.prepare("SELECT chat_id FROM users").all() as { chat_id: number }[];
+    const users = getUsers();
     let success = 0;
     let fail = 0;
 
