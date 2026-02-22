@@ -1,7 +1,15 @@
 import { Bot, InlineKeyboard } from "grammy";
 import * as dotenv from "dotenv";
+import http from "http";
 
 dotenv.config();
+
+// Render uchun dummy server (health check uchun)
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end("Bot is running...");
+}).listen(PORT);
 
 const token = process.env.BOT_TOKEN;
 if (!token) throw new Error("BOT_TOKEN is missing!");
@@ -9,20 +17,31 @@ if (!token) throw new Error("BOT_TOKEN is missing!");
 const bot = new Bot(token);
 const webAppUrl = process.env.WEBAPP_URL || "https://your-webapp.vercel.app";
 
+bot.catch((err) => {
+    const ctx = err.ctx;
+    console.error(`Error while handling update ${ctx.update.update_id}:`);
+    console.error(err.error);
+});
+
 const getRates = async () => {
+    console.log("Kurslarni olishga urinish...");
     try {
         const res = await fetch('https://cbu.uz/uz/arkhiv-kursov-valyut/json/');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data: any = await res.json();
         const usd = data.find((c: any) => c.Ccy === 'USD');
         const rate = parseFloat(usd.Rate);
         const gold = Math.floor(68 * rate); // 1g oltin ~ $68
+        console.log(`Kurslar olindi: USD=${rate}, Gold=${gold}`);
         return { rate, gold };
     } catch (e) {
+        console.error("Kursni olishda xato:", e);
         return null;
     }
 };
 
 bot.command("start", async (ctx) => {
+    console.log(`Start buyrug'i keldi: ${ctx.from?.username || ctx.from?.id}`);
     const rates = await getRates();
     const kursInfo = rates ? `\n\n🏦 *Bugungi kurs:* 1$ = ${rates.rate.toLocaleString()} so'm\n🟡 *Oltin (1g):* ~${rates.gold.toLocaleString()} so'm\n` : "";
 
@@ -37,6 +56,7 @@ bot.command("start", async (ctx) => {
         "👇 Bo'limni tanlang:",
         { parse_mode: "Markdown", reply_markup: keyboard }
     );
+    console.log("Start javobi yuborildi.");
 });
 
 bot.command("kurs", async (ctx) => {
