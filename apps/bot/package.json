@@ -7,7 +7,11 @@
         "build": "tsc"
     },
     "dependencies": {
-        "grammy": "^1.15.0",
-        "dotenv": "^16.0.0"
+        "better-sqlite3": "^12.6.2",
+        "dotenv": "^16.0.0",
+        "grammy": "^1.15.0"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.13"
     }
 }

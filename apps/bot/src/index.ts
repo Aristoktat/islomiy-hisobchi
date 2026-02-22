@@ -1,10 +1,30 @@
 import { Bot, InlineKeyboard } from "grammy";
 import * as dotenv from "dotenv";
 import http from "http";
+import Database from "better-sqlite3";
+import path from "path";
 
 dotenv.config();
 
-// Render uchun dummy server (health check uchun)
+// Database sozlamalari
+const dbPath = path.join(process.cwd(), "users.db");
+const db = new Database(dbPath);
+
+// Jadval yaratish
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        chat_id INTEGER UNIQUE,
+        username TEXT,
+        first_name TEXT,
+        last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+`).run();
+
+// Admin ID (Sizning chat_id ingiz)
+const ADMIN_ID = process.env.ADMIN_ID ? parseInt(process.env.ADMIN_ID) : 689757167;
+
+// Render uchun dummy server
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
     res.writeHead(200);
@@ -15,6 +35,19 @@ const token = process.env.BOT_TOKEN;
 if (!token) throw new Error("BOT_TOKEN is missing!");
 
 const bot = new Bot(token);
+
+// Har bir xabarni tekshirib, foydalanuvchini bazaga qo'shish
+bot.use(async (ctx, next) => {
+    if (ctx.from) {
+        const { id, username, first_name } = ctx.from;
+        db.prepare(`
+            INSERT OR REPLACE INTO users (chat_id, username, first_name, last_seen)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        `).run(id, username || null, first_name);
+    }
+    await next();
+});
+
 const webAppUrl = process.env.WEBAPP_URL || "https://your-webapp.vercel.app";
 
 bot.catch((err) => {
@@ -57,6 +90,51 @@ bot.command("start", async (ctx) => {
         { parse_mode: "Markdown", reply_markup: keyboard }
     );
     console.log("Start javobi yuborildi.");
+});
+
+// Admin Panel: Statistika
+bot.command("admin", async (ctx) => {
+    if (ctx.from?.id !== ADMIN_ID) return;
+
+    const stats = db.prepare("SELECT COUNT(*) as total FROM users").get() as { total: number };
+    const recent = db.prepare("SELECT username, first_name FROM users ORDER BY last_seen DESC LIMIT 5").all() as any[];
+
+    let text = `📊 *Bot Statistikasi*\n\n`;
+    text += `👥 Jami foydalanuvchilar: \`${stats.total}\`\n\n`;
+    text += `🕒 *Oxirgi faol foydalanuvchilar:*\n`;
+
+    recent.forEach(u => {
+        text += `- ${u.first_name} (@${u.username || 'yoq'})\n`;
+    });
+
+    await ctx.reply(text, { parse_mode: "Markdown" });
+});
+
+// Admin Panel: Xabar yuborish
+bot.command("broadcast", async (ctx) => {
+    if (ctx.from?.id !== ADMIN_ID) return;
+
+    const message = ctx.match;
+    if (!message) {
+        return await ctx.reply("Foydalanish: `/broadcast Xabar matni`", { parse_mode: "Markdown" });
+    }
+
+    const users = db.prepare("SELECT chat_id FROM users").all() as { chat_id: number }[];
+    let success = 0;
+    let fail = 0;
+
+    await ctx.reply(`📢 Xabar yuborish boshlandi (${users.length} foydalanuvchiga)...`);
+
+    for (const user of users) {
+        try {
+            await ctx.api.sendMessage(user.chat_id, message);
+            success++;
+        } catch (e) {
+            fail++;
+        }
+    }
+
+    await ctx.reply(`✅ Tugatildi!\n\n🚀 Muvaffaqiyatli: ${success}\n❌ Xato: ${fail}`);
 });
 
 bot.command("kurs", async (ctx) => {
