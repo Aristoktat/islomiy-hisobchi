@@ -1,0 +1,29 @@
+services:
+  # Next.js Web App
+  - type: web
+    name: islomiy-hisobchi-web
+    env: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter engine build && pnpm --filter web build
+    startCommand: pnpm --filter web start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_BOT_USERNAME
+        value: islomiy_hisobchi_bot # Change this to your actual bot username
+
+  # Telegram Bot (Background Worker)
+  - type: worker
+    name: islomiy-hisobchi-bot
+    env: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter engine build
+    startCommand: pnpm --filter bot dev
+    envVars:
+      - key: BOT_TOKEN
+        sync: false # Set this in Render Dashboard
+      - key: WEBAPP_URL
+        fromService:
+          type: web
+          name: islomiy-hisobchi-web
+          property: host

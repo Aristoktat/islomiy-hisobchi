@@ -1,0 +1,13 @@
+{
+    "name": "engine",
+    "version": "1.0.0",
+    "main": "src/index.ts",
+    "name_spaced": "engine",
+    "types": "src/index.ts",
+    "scripts": {
+        "test": "vitest run"
+    },
+    "devDependencies": {
+        "vitest": "^1.2.0"
+    }
+}

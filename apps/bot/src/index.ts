@@ -1,0 +1,88 @@
+import { Bot, InlineKeyboard } from "grammy";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+const token = process.env.BOT_TOKEN;
+if (!token) throw new Error("BOT_TOKEN is missing!");
+
+const bot = new Bot(token);
+const webAppUrl = process.env.WEBAPP_URL || "https://your-webapp.vercel.app";
+
+const getRates = async () => {
+    try {
+        const res = await fetch('https://cbu.uz/uz/arkhiv-kursov-valyut/json/');
+        const data: any = await res.json();
+        const usd = data.find((c: any) => c.Ccy === 'USD');
+        const rate = parseFloat(usd.Rate);
+        const gold = Math.floor(68 * rate); // 1g oltin ~ $68
+        return { rate, gold };
+    } catch (e) {
+        return null;
+    }
+};
+
+bot.command("start", async (ctx) => {
+    const rates = await getRates();
+    const kursInfo = rates ? `\n\n🏦 *Bugungi kurs:* 1$ = ${rates.rate.toLocaleString()} so'm\n🟡 *Oltin (1g):* ~${rates.gold.toLocaleString()} so'm\n` : "";
+
+    const keyboard = new InlineKeyboard()
+        .webApp("🧾 Meros (Faroiz)", `${webAppUrl}/inheritance`).row()
+        .webApp("💰 Zakot", `${webAppUrl}/zakat`).row()
+        .webApp("📜 Vasiyat", `${webAppUrl}/will`);
+
+    await ctx.reply(
+        `Assalomu alaykum! *Islomiy Hisobchi* botiga xush kelibsiz.${kursInfo}\n` +
+        "Ushbu ilova yordamida meros, zakot va vasiyatni Hanafiy mazhabi qoidalari asosida hisoblashingiz mumkin.\n\n" +
+        "👇 Bo'limni tanlang:",
+        { parse_mode: "Markdown", reply_markup: keyboard }
+    );
+});
+
+bot.command("kurs", async (ctx) => {
+    const rates = await getRates();
+    if (rates) {
+        await ctx.reply(
+            `🏦 *Markaziy Bank kursi:*\n1 USD = ${rates.rate.toLocaleString()} so'm\n\n` +
+            `🟡 *Oltin narxi (gramm):*\n1g ≈ ${rates.gold.toLocaleString()} so'm\n` +
+            `_(Xalqaro birja narxi asosida taxminiy)_`,
+            { parse_mode: "Markdown" }
+        );
+    } else {
+        await ctx.reply("Kurs ma'lumotlarini olishda xato yuz berdi.");
+    }
+});
+
+const formatMoney = (amount: bigint) => {
+    return amount.toLocaleString("uz-UZ").replace(/,/g, " ") + " so'm";
+};
+
+// WebApp yuborgan natijani qabul qilish
+bot.on("message:web_app_data", async (ctx) => {
+    try {
+        const data = JSON.parse(ctx.message.web_app_data.data);
+
+        if (data.type === 'inheritance') {
+            let text = `📑 *Meros Taqsimoti Natijasi*\n\n`;
+            text += `💰 Sof meros: \`${formatMoney(BigInt(data.netEstate))}\`\n\n`;
+
+            data.heirs.forEach((h: any) => {
+                text += `👤 *${h.type}* (${h.count} kishi):\n`;
+                text += `   - Ulush: ${h.shareFraction.n}/${h.shareFraction.d} (${h.sharePercent}%)\n`;
+                text += `   - Miqdor: \`${formatMoney(BigInt(h.shareAmount))}\`\n`;
+                text += `   - Sabab: ${h.reason}\n\n`;
+            });
+
+            if (data.warnings.length > 0) {
+                text += `⚠️ *Ogohlantirishlar:*\n${data.warnings.join('\n')}`;
+            }
+
+            await ctx.reply(text, { parse_mode: "Markdown" });
+        }
+    } catch (e) {
+        await ctx.reply("Ma'lumotlarni qayta ishlashda xato yuz berdi.");
+    }
+});
+
+bot.start();
+console.log("Bot ishga tushdi...");

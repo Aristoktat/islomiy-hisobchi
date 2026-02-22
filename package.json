@@ -1,0 +1,13 @@
+{
+    "name": "islomiy-hisobchi",
+    "private": true,
+    "scripts": {
+        "dev": "pnpm -r --parallel dev",
+        "test": "pnpm -r test",
+        "build": "pnpm -r build"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0",
+        "tsx": "^4.0.0"
+    }
+}
