@@ -90,7 +90,8 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     # Health check serverni ishga tushirish
     await start_health_check()
-    await dp.start_polling(bot)
+    # Pollingni boshlash va kutib qolgan xabarlarni o'chirib yuborish
+    await dp.start_polling(bot, skip_updates=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
