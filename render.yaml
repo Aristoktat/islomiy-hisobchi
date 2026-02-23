@@ -1,7 +1,7 @@
 services:
-  # Next.js Web App & Telegram Bot (Combined)
+  # Next.js Web App
   - type: web
-    name: islomiy-hisobchi
+    name: islomiy-hisobchi-web
     env: node
     plan: free
     buildCommand: pnpm install && pnpm --filter engine build && pnpm --filter web build
@@ -9,10 +9,19 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+
+  # Python Bot (Combined with health check to stay alive)
+  - type: web
+    name: islomiy-hisobchi-py-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
       - key: BOT_TOKEN
-        sync: false # Set in Dashboard
+        value: "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0"
       - key: WEBAPP_URL
         fromService:
           type: web
-          name: islomiy-hisobchi
+          name: islomiy-hisobchi-web
           property: host
