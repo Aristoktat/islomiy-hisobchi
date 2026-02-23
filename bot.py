@@ -86,6 +86,8 @@ async def start_health_check():
 
 async def main():
     logging.info("Bot ishga tushmoqda...")
+    # Avvalgi webhooklarni o'chirish (Conflict xatosini oldini olish uchun)
+    await bot.delete_webhook(drop_pending_updates=True)
     # Health check serverni ishga tushirish
     await start_health_check()
     await dp.start_polling(bot)
