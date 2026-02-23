@@ -1,13 +1,21 @@
 import logging
 import asyncio
+import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import aiohttp
+from aiohttp import web
 
 # Bot sozlamalari
-TOKEN = "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0"
-WEBAPP_URL = "https://islomiy-hisobchi.onrender.com"
+TOKEN = os.environ.get("BOT_TOKEN", "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0")
+raw_url = os.environ.get("WEBAPP_URL", "https://islomiy-hisobchi-web.onrender.com")
+
+# URLning https ekanligini ta'minlash
+if raw_url.startswith("http"):
+    WEBAPP_URL = raw_url
+else:
+    WEBAPP_URL = f"https://{raw_url}"
 
 # Loggingni sozlash
 logging.basicConfig(level=logging.INFO)
@@ -64,8 +72,6 @@ async def cmd_kurs(message: types.Message):
     else:
         await message.answer("Kurs ma'lumotlarini olishda xato yuz berdi.")
 
-from aiohttp import web
-import os
 
 async def handle(request):
     return web.Response(text="Bot is running")
