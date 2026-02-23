@@ -1,8 +1,12 @@
 import { Bot, InlineKeyboard, webhookCallback } from "grammy";
 import { NextRequest } from "next/server";
 
-const token = "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0";
-const bot = new Bot(token);
+const token = "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0".trim();
+const bot = new Bot(token, {
+    client: {
+        timeout: 30000, // 30 soniya kutish
+    }
+});
 const webAppUrl = process.env.WEBAPP_URL || "https://islomiy-hisobchi-web.onrender.com";
 
 // Markaziy Bank kurslarini olish
