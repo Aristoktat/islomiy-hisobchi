@@ -7,8 +7,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import aiohttp
 from aiohttp import web
 
-# Bot sozlamalari
-TOKEN = os.environ.get("BOT_TOKEN", "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0")
+# Bot sozlamalari (Yangi yangilangan token)
+TOKEN = "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0"
 raw_url = os.environ.get("WEBAPP_URL", "https://islomiy-hisobchi-web.onrender.com")
 
 # URLning https ekanligini ta'minlash
