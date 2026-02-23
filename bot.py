@@ -8,7 +8,7 @@ import aiohttp
 from aiohttp import web
 
 # Bot sozlamalari (Yangi yangilangan token)
-TOKEN = "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0"
+TOKEN = "8509459353:AAF59X3xxYvSclQJpXbTSKfuqSiZMlLDPhE"
 raw_url = os.environ.get("WEBAPP_URL", "https://islomiy-hisobchi-web.onrender.com")
 
 # URLning https ekanligini ta'minlash

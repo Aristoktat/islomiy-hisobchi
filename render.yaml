@@ -19,7 +19,7 @@ services:
     startCommand: python bot.py
     envVars:
       - key: BOT_TOKEN
-        value: "8509459353:AAGxF8XmeE_eBeFK10qSQYIsYYYyndLpaU0"
+        value: "8509459353:AAF59X3xxYvSclQJpXbTSKfuqSiZMlLDPhE"
       - key: WEBAPP_URL
         fromService:
           type: web
