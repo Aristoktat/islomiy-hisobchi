@@ -81,12 +81,21 @@ bot.on("message:web_app_data", async (ctx) => {
 // Webhookni sozlash (Brauzerda /api/bot manziliga bir marta kiriladi)
 export async function GET(req: Request) {
     const url = new URL(req.url);
-    const webhookUrl = `${url.protocol}//${url.host}/api/bot`;
+    // Render xavfsizlik uchun https talab qiladi, shuning uchun protocolni https deb majburlaymiz
+    const host = req.headers.get("host") || url.host;
+    const webhookUrl = `https://${host}/api/bot`;
+
     try {
+        console.log(`Webhook o'rnatilmoqda: ${webhookUrl}`);
+        // Avval bot haqida ma'lumot olishni tekshiramiz (Token to'g'riligini bilish uchun)
+        const me = await bot.api.getMe();
+        console.log(`Bot topildi: @${me.username}`);
+
         await bot.api.setWebhook(webhookUrl);
-        return new Response(`Webhook set to ${webhookUrl}`, { status: 200 });
+        return new Response(`✅ Webhook muvaffaqiyatli saqlandi!\n\nBot: @${me.username}\nManzil: ${webhookUrl}`, { status: 200 });
     } catch (e: any) {
-        return new Response(`Error: ${e.message}`, { status: 500 });
+        console.error("Webhook xatosi:", e);
+        return new Response(`❌ Xatolik yuz berdi: ${e.message}\n\nEslatma: Token to'g'riligini va internet borligini tekshiring.`, { status: 500 });
     }
 }
 
