@@ -87,11 +87,15 @@ async def start_health_check():
 async def main():
     logging.info("Bot ishga tushmoqda...")
     # Avvalgi webhooklarni o'chirish (Conflict xatosini oldini olish uchun)
-    await bot.delete_webhook(drop_pending_updates=True)
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+    except Exception as e:
+        logging.error(f"Webhook o'chirishda xato: {e}")
+    
     # Health check serverni ishga tushirish
     await start_health_check()
-    # Pollingni boshlash va kutib qolgan xabarlarni o'chirib yuborish
-    await dp.start_polling(bot, skip_updates=True)
+    # Pollingni boshlash
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
