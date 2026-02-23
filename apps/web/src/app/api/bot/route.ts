@@ -1,10 +1,12 @@
 import { Bot, InlineKeyboard, webhookCallback } from "grammy";
 import { NextRequest } from "next/server";
 
-const token = process.env.BOT_TOKEN;
-if (!token) throw new Error("BOT_TOKEN is missing!");
+const token = process.env.BOT_TOKEN || "";
+if (!token && process.env.NODE_ENV === "production") {
+    console.warn("DIQQAT: BOT_TOKEN topilmadi. Bot ishlamasligi mumkin.");
+}
 
-const bot = new Bot(token);
+const bot = new Bot(token || "DUMMY_TOKEN");
 const webAppUrl = process.env.WEBAPP_URL || "https://islomiy-hisobchi-web.onrender.com";
 
 // Markaziy Bank kurslarini olish
