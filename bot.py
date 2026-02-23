@@ -18,7 +18,11 @@ else:
     WEBAPP_URL = f"https://{raw_url}"
 
 # Loggingni sozlash
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -35,11 +39,12 @@ async def get_rates():
                         gold = int(68 * rate)
                         return {"rate": rate, "gold": gold}
         except Exception as e:
-            logging.error(f"Kurs olishda xato: {e}")
+            logger.error(f"Kurs olishda xato: {e}")
             return None
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
+    logger.info(f"/start buyrug'i keldi: {message.from_user.id}")
     rates = await get_rates()
     kurs_info = ""
     if rates:
@@ -72,30 +77,43 @@ async def cmd_kurs(message: types.Message):
     else:
         await message.answer("Kurs ma'lumotlarini olishda xato yuz berdi.")
 
+@dp.message(lambda message: not message.text.startswith('/'))
+async def echo_all(message: types.Message):
+    logger.info(f"Xabar keldi: {message.text}")
+    await message.answer("Xabar qabul qilindi! Kalkulyatorlarni ko'rish uchun /start buyrug'ini bosing.")
 
 async def handle(request):
+    logger.info("Health check so'rovi keldi.")
     return web.Response(text="Bot is running")
 
 async def start_health_check():
+    port = int(os.environ.get('PORT', 8080))
+    logger.info(f"Health check server {port}-portda ishga tushmoqda...")
     app = web.Application()
     app.router.add_get('/', handle)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', int(os.environ.get('PORT', 8080)))
+    site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
 
 async def main():
-    logging.info("Bot ishga tushmoqda...")
-    # Avvalgi webhooklarni o'chirish (Conflict xatosini oldini olish uchun)
+    logger.info("--- BOT ISHGA TUSHISHNI BOSHLADI ---")
     try:
+        me = await bot.get_me()
+        logger.info(f"Bot ma'lumotlari: @{me.username} (ID: {me.id})")
+        
+        # Webhookni o'chirish
+        logger.info("Webhook o'chirilmoqda...")
         await bot.delete_webhook(drop_pending_updates=True)
+        
+        # Health check
+        await start_health_check()
+        
+        # Polling
+        logger.info("Polling boshlanmoqda...")
+        await dp.start_polling(bot)
     except Exception as e:
-        logging.error(f"Webhook o'chirishda xato: {e}")
-    
-    # Health check serverni ishga tushirish
-    await start_health_check()
-    # Pollingni boshlash
-    await dp.start_polling(bot)
+        logger.error(f"BOT ISHGA TUSHISHDA XATO: {e}", exc_info=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
