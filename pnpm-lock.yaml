@@ -23,12 +23,18 @@ importers:
       grammy:
         specifier: ^1.15.0
         version: 1.40.0
+      tsx:
+        specifier: ^4.0.0
+        version: 4.21.0
 
   apps/web:
     dependencies:
       engine:
         specifier: workspace:*
         version: link:../../packages/engine
+      grammy:
+        specifier: ^1.40.0
+        version: 1.40.0
       lucide-react:
         specifier: ^0.320.0
         version: 0.320.0(react@18.3.1)
